@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import PortfolioStats from "./PortfolioStats.jsx";
+
 const API_URL = import.meta.env.VITE_API_URL;
 
 function formatDate(value) {
@@ -177,7 +179,7 @@ export default function App() {
         </button>
       </header>
 
-      {error && (
+      {error && tab !== "portfolio" && (
         <div className="banner" role="alert">
           <strong>Couldn’t load the report.</strong>
           <span>{error}</span>
@@ -185,9 +187,9 @@ export default function App() {
         </div>
       )}
 
-      {loading && !data && <Skeleton />}
+      {loading && !data && tab !== "portfolio" && <Skeleton />}
 
-      {data && (
+      {data && tab !== "portfolio" && (
         <>
           <section className="stats">
             <Stat label="Emails read" value={data.counts?.emails ?? 0} />
@@ -207,7 +209,10 @@ export default function App() {
               {data.model_used ? ` · ${data.model_used}` : ""}
             </p>
           </section>
+        </>
+      )}
 
+      <>
           <nav className="tabs" role="tablist">
             <button
               role="tab"
@@ -215,7 +220,7 @@ export default function App() {
               className={tab === "jobs" ? "on" : ""}
               onClick={() => setTab("jobs")}
             >
-              Job openings <span>{data.job_openings.length}</span>
+              Job openings {data && <span>{data.job_openings.length}</span>}
             </button>
             <button
               role="tab"
@@ -223,7 +228,15 @@ export default function App() {
               className={tab === "errors" ? "on" : ""}
               onClick={() => setTab("errors")}
             >
-              Errors <span>{errors.length}</span>
+              Errors {data && <span>{errors.length}</span>}
+            </button>
+            <button
+              role="tab"
+              aria-selected={tab === "portfolio"}
+              className={tab === "portfolio" ? "on" : ""}
+              onClick={() => setTab("portfolio")}
+            >
+              Portfolio stats
             </button>
             {tab === "jobs" && (
               <input
@@ -236,7 +249,7 @@ export default function App() {
             )}
           </nav>
 
-          {tab === "jobs" &&
+          {data && tab === "jobs" &&
             (jobs.length ? (
               <div className="grid">
                 {jobs.map((j, i) => (
@@ -249,7 +262,7 @@ export default function App() {
               </p>
             ))}
 
-          {tab === "errors" &&
+          {data && tab === "errors" &&
             (errors.length ? (
               <div className="grid">
                 {errors.map((e, i) => (
@@ -259,8 +272,9 @@ export default function App() {
             ) : (
               <p className="empty">All quiet. No errors reported.</p>
             ))}
-        </>
-      )}
+
+          {tab === "portfolio" && <PortfolioStats />}
+      </>
 
       <footer className="foot">Powered by Gmail + Gemini via AWS Lambda</footer>
     </div>
