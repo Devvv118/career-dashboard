@@ -196,3 +196,11 @@ pre {
   .prow { grid-template-columns: repeat(3, 1fr); }
   .pname { grid-column: 1 / -1; }
 }
+
+.notice {
+  display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center;
+  background: var(--accent-soft); color: var(--ink);
+  border: 1px solid var(--accent); border-radius: 12px;
+  padding: 12px 16px; margin-bottom: 24px; font-size: 14px;
+}
+.notice strong { color: var(--accent); }

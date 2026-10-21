@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import PortfolioStats from "./PortfolioStats.jsx";
+import PortfolioStats, { PORTFOLIO_LIVE } from "./PortfolioStats.jsx";
+import { sampleReport, SAMPLE_DATE } from "./sampleData.js";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -123,7 +124,9 @@ export default function App() {
 
   const load = useCallback(async () => {
     if (!API_URL) {
-      setError("VITE_API_URL is not set. Copy .env.example to .env and add your API Gateway URL.");
+      // No backend configured: show the bundled sample snapshot.
+      setData(sampleReport);
+      setError("");
       setLoading(false);
       return;
     }
@@ -178,6 +181,13 @@ export default function App() {
           {loading ? "Reading inbox…" : "Refresh"}
         </button>
       </header>
+
+      {(tab === "portfolio" ? !PORTFOLIO_LIVE : !API_URL) && (
+        <div className="notice" role="note">
+          <strong>Sample data from {SAMPLE_DATE}.</strong>
+          <span>Live data is unavailable to keep financial and personal data private.</span>
+        </div>
+      )}
 
       {error && tab !== "portfolio" && (
         <div className="banner" role="alert">
@@ -276,7 +286,6 @@ export default function App() {
           {tab === "portfolio" && <PortfolioStats />}
       </>
 
-      <footer className="foot">Powered by Gmail + Gemini via AWS Lambda</footer>
     </div>
   );
 }

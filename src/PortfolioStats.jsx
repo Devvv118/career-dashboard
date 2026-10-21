@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
+import { samplePortfolio } from "./sampleData.js";
 
 const BASE = (import.meta.env.VITE_PORTFOLIO_API_URL || "").replace(/\/$/, "");
+// Live mode needs VITE_PORTFOLIO_API_URL. Without it the bundled sample snapshot is shown.
+// VITE_PORTFOLIO_STATS_KEY (optional) is baked into the build, so it is visible to anyone who can load the site.
+export const PORTFOLIO_LIVE = !!BASE;
+const ENV_KEY = import.meta.env.VITE_PORTFOLIO_STATS_KEY || "";
 const KEY_STORE = "portfolio-stats-key";
 
 const readKey = () => {
@@ -47,7 +52,7 @@ function KeyForm({ onSubmit, invalid }) {
 }
 
 export default function PortfolioStats() {
-  const [key, setKey] = useState(readKey);
+  const [key, setKey] = useState(() => ENV_KEY || readKey());
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -55,7 +60,8 @@ export default function PortfolioStats() {
 
   const load = useCallback(async (k) => {
     if (!BASE) {
-      setError("VITE_PORTFOLIO_API_URL is not set. Add your portfolio backend URL to .env.");
+      setData(samplePortfolio);
+      setLoading(false);
       return;
     }
     setLoading(true);
@@ -64,9 +70,9 @@ export default function PortfolioStats() {
     try {
       const res = await fetch(`${BASE}/api/stats`, { headers: k ? { "x-stats-key": k } : {} });
       if (res.status === 401) {
-        saveKey("");
-        setKey("");
+        if (!ENV_KEY) { saveKey(""); setKey(""); }
         setInvalid(true);
+        setError(ENV_KEY ? "The key set in VITE_PORTFOLIO_STATS_KEY was rejected by the backend." : "");
         return;
       }
       if (!res.ok) throw new Error(`Request failed (${res.status})`);
@@ -82,7 +88,7 @@ export default function PortfolioStats() {
 
   useEffect(() => { load(key); }, [load, key]);
 
-  if (invalid || (!key && !data && !loading && !error)) {
+  if (!ENV_KEY && BASE && (invalid || (!key && !data && !loading && !error))) {
     return <KeyForm invalid={invalid} onSubmit={(k) => { saveKey(k); setKey(k); }} />;
   }
 
@@ -143,8 +149,12 @@ export default function PortfolioStats() {
           </section>
 
           <button className="link" onClick={() => load(key)} disabled={loading}>{loading ? "Refreshing…" : "Refresh stats"}</button>
-          {" · "}
-          <button className="link" onClick={() => { saveKey(""); setKey(""); setData(null); }}>Forget key</button>
+          {BASE && !ENV_KEY && (
+            <>
+              {" · "}
+              <button className="link" onClick={() => { saveKey(""); setKey(""); setData(null); }}>Forget key</button>
+            </>
+          )}
         </>
       )}
     </>
